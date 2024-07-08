@@ -1,0 +1,438 @@
+npm install styled-components
+
+
+to create a styled components we use "styled" method provied by the styled-components library
+
+ex: const H1 = styled.h1`
+  font-size: 30px;
+  font-weight: 600;
+  background-color: yellow;
+`;
+
+this will create a react-component  that is why the name starts with capital letter
+
+and we can also use the javascript in this template literal and we can render styles based on some props also 
+
+ex: <Heading as="h1"> </Heading>
+ex: <Heading as="h2"> </Heading>
+ex: <Heading as="h3"> </Heading>
+
+ then the conditional styling for this using the as props is will be like this below
+ 
+ const Heading = styled.h1`
+  ${(props) =>
+    props.as === "h1" &&
+    `
+     font-size: 3rem;
+     font-weight: 600;
+  `}
+
+  ${(props) =>
+    props.as === "h2" &&
+    `
+     font-size: 2rem;
+     font-weight: 600;
+  `}
+
+
+  ${(props) =>
+    props.as === "h3" &&
+    `
+     font-size: 2rem;
+     font-weight: 500;
+  `}
+`;
+
+GlobalStyles styled-components
+
+if you want to predefine some styles and make them global like predefined colors, fonts, shadows, borders, and more 
+you need to create a file and in that file you need to define all your styles with   
+"createGlobalStyles" that is provided by the styled components 
+
+ex: const GlobalStyles = createGlobalStyles`
+   font-family: Poppins;
+`;
+
+and this will return a react-component that you need to include it in the App component as the Sibling as all other components 
+so this GlobalStyles should not be a child component it should live in the root of the components
+
+ex: 
+     export default function App(){
+      return (
+        <>
+        <GlobalStyles />
+          .... all other components
+        </>
+      )
+     }
+
+
+
+
+
+
+Supabase is a service that allows to create a backend with a postgres database
+
+1. It automatically creates a database and api so we can easily request and receive data from server
+2. No backend developement needed
+3. Perfect to get up and running quickly
+4. It is not just an API: Supabase also comes with easy-to-use user authentication and file storage
+
+
+Supabase password: 10ojrYl4voKqZT9E
+
+to install supabase in the react application 
+
+1. "npm i --save @supabase/supabase-js"
+2. then you need to create a file named "supabase.js" inside your project folder anywhere 
+3. then you have to take your supabase_url and supabase_key and create a client using the "createClient" method provided by supabase package
+ 
+ ex: import {createClient} from "@supabase/supabase-js";
+     const supabase_url = "something"
+     const supabase_key = "something" 
+     const supabase = createClient(supabase_url, supabase_key);
+      
+    export default supabase;
+
+4. now the supabase is setup in you application and you can perform/access your data in the tables inside your application
+   using the supabase client we created 
+
+   ex: import supabase from "./supabase";
+
+       export async function getCabins() {
+       const { data, error } = await supabase.from("cabins").select("*");
+
+       if (error) { 
+         console.log(error);
+         throw new Error("Cabins could not be loaded");
+       }
+
+       return data;
+}
+
+Here in the example shows that we are reading all the data rows from "Cabins" table 
+
+
+
+
+
+Supabase Policies 
+
+before you can access the data from the tables in your application we need to setup the row-level-security rules 
+that allow us to read/write the database only to a certain level and we can change the level of access on our own 
+
+we can either give the read access to all the people with key or only the authenticated person and more 
+
+
+React Query Library/TanStack Query
+
+1. Powerful library that allow us to manage remote state
+2. many features allow us to write a lot less code, while also making the UX a lot better 
+   {
+    A. data is stored in a cache  
+       every fetched data is cached and if any other components need the same data they will receive 
+       data instantly without any fetching 
+    B. it also gives automatic loading and error states 
+    C. automatic re-fetching to keep the state synced
+    D. pre-fetch the data
+    E. easy remote state mutation(uploading)
+    F. Offline support 
+   }
+
+3. Needed because remote state is fundamentally diferent from regular state
+
+installation 
+ "npm i @tanstack/react-query"
+
+Usage 
+  1. create a place where data lives
+  2. then provide the data to application same as ContextAPI and Redux 
+
+setup : 
+  const QueryClient = new QueryClient(); 
+  it takes a objects will options:  
+                       defaultOptions: {  
+                        queries: {
+                           staleTime: 60 * 1000;
+                        }
+                       } 
+
+      ex:const QueryClient = new QueryClient({
+         defaultOptions: {
+          queries: {
+            staleTime: 60 * 1000
+          }
+         }
+      })
+
+staleTime is the time that date stays fresh in the cache until it is re-fetched again
+
+to provide the whole remote state to the application you need to wrap all the App  inside the 
+          <QueryClientProvider client={QueryClient} > 
+          .... everything else
+          </QueryClientProvider >
+
+    basically u need to make this component the root/parent component in the App so everything u rendering
+    inside the App should be its child to gain access to the remote state
+
+
+
+REACT QUERY DEV-TOOLS SETUP 
+EX : npm i @tanstack/react-query-devtools@4
+ 
+ and you need to include the  <ReactQueryDevtools initialIsOpen={false} /> inside the 
+   <QueryClientProvider>
+
+USAGE 
+  to run a query the main hook we use is "useQuery" provided by the react-query library
+  and it take a object of parameters in which the props are queryKey, queryFn. 
+  the queryKey should be a array of keys and the queryFn should be a async function that returns a promise 
+
+   ex:  const {
+             isLoading,
+             data: cabins,
+             error,
+              } = useQuery({
+                       queryKey: ["cabins"],
+                       queryFn: getCabins,
+                    });
+
+  the queryKey is the key that is used in the caching of the returned data so if any other component sends a query with the same key it will get the cached data from the previous fetch
+
+
+DELETING DATA FROM DATABASE USING THE REACTQUERY USEMUTATION() HOOK
+
+  create a policy in the supabase that allows user to delete the data from the database first 
+1. get the deleting command query from the supabase and create a async helper function that takes id 
+   and deletes the cabin of that particular id
+
+2. In the ReactQuery you can delete the data from the Database using the useMutation() Hook, you can delete
+   the data using a onClick on the button but the useMutation() Hook provide some additional features to work with for handling the error while deleting and we also get a isLoading state that will be true when the deleting is ongoing and sets to false when the deleting is done
+  
+  ex: const { isLoading: isDeleting, mutate } = useMutation({
+              mutationFn: deleteCabin,
+              onSuccess: () => {
+                       toast.success("Cabin successfully deleted");
+                       queryClient.invalidateQueries({
+                      queryKey: ["cabins"],
+                   });
+                  },
+               onError: (err) => toast.error(err.message),
+            });
+
+  3. Here you can see we get two props from useMutation() isLoading: Boolean, and mutate: Function to handle the mutation of the data 
+
+  4. and useMutation() takes a object of props as prop in the object you need to define the 
+        mutationFn: the function that is responsible for mutating the data
+        onSuccess: it is a callback that can be executed if the mutation is successfull we can do 
+                   anything in the callback like sending a toast, invalidating the Query data to re-fetch the query using its queryKey this is why the query key we provided in the useQuery is important 
+        onError: it is also a callback that receives a error prop that will execute when the mutation is 
+                 failed for any reason 
+
+  5. to setup everything you need to include the mutate prop from useMutation() to be run on the button 
+     onClick(); that is attached to delete the data  
+       <button onClick(()=> mutate(id))>Delete</button>
+
+  6. By including the mutate in the onClick handler you are successfully using the useMutation() and if 
+      the data is removed successfully the onSuccess callback is to be executed / if error occured  
+      onError() callback will be executed 
+
+
+  7. in the above we can se onSuccess we are invalidating the data of the key ["cabins"] to do that and invalidate any kind of data that is connected to the reactQuery we need to call the invalidateQueries() on our queryClient that we created in our App but to get access to the queryClient in other apps 
+  we need to use the useQueryClient() Hook by reactQuery and then call invalidateQueries() on it 
+        ex: const queryClient = useQueryClient();
+                  queryClient.invalidateQueries({ 
+                    queryKey: ["cabins"],
+                   })
+    the invalidateQueries take the object with prop "queryKey" and we need to specify the key of the data 
+    we need to invalidate
+
+
+SETTING TOASTS 
+  1. npm i react-hot-toast
+  2. setting up in the App 
+     we need to inlucde in our main App component and self closed compoent like GlobalStyles,ReactQueryDevTools  and the component that is to be included is < Toaster />
+  3.it takes some props to work correctly  
+   ex: <Toaster
+           position="top-center"
+             gutter={12}
+              containerStyle={{ margin: "8px" }}
+             toastOptions={{
+     success: {
+       duration: 3000,
+     },
+     error: {
+       duration: 5000, 
+     },
+     style: {
+       fontSize: "16px",
+       maxWidth: "500px",
+       padding: "16px 24px",
+       backgroundColor: "var(--color-grey-0)",
+       color: "var(--color-grey-700)",
+     },
+     }}
+     />
+
+   4. position: that position of the toast, gutter: the gap between multiple toasts, containerStyle: the css to style the toast container, toastOptions: { success: {duration : that amount of time the toast is to be displayer}, error: {duration: the amount of time the error toast is to be displayed} style: {
+    the object to write css for the insides of the container
+   } }
+
+   5. and at lastly after setting up it correctly on the App component you can use the toast on any other 
+     component in our application using the toast() function provided by the react-hot-toast 
+
+     to create a success toast you just need to call success on the toast  
+     ex: toast.success("cabin deleted successfully");
+       to create a error toast you just need to call error on the toast 
+       ex: toast.error("Failed to delete cabin")
+  there are many more other options for this toast check the docs for more details
+
+
+REACT QUERY HOOK FORM  
+
+installation : "npm i react-hook-form"
+ 
+ 1. It provides a total of "6" Hooks namely ["useForm()", "useController()", "useFormContext()", "useWatch()", "useFormState()", "useFieldArray()"]
+    but the main one of the all is "useForm()";
+
+ 2. useForm() provides all these props to use each prop has different function and each seperately has its own props
+ <>
+ </> register
+ </> unregister
+ </> formState
+ </> watch
+ </> handleSubmit
+ </> reset
+ </> resetField
+ </> setError
+ </> clearErrors
+ </> setValue
+ </> setFocus
+ </> getValues
+ </> getFieldState
+ </> trigger
+ </> control
+ </> Form 
+ </>
+
+3. the first main this is to register your inputs   
+     const { register, handleSubmit, reset, getValues, formState } = useForm();
+     to register the input we use the register from the useForm hook  and working is a bit different but it works just like below 
+     
+     ex:   <input value={username}  {...register}  />
+     that's it we registered the above input element by entering the js mode inside the element and spreading the register
+     register also provides options to validate the input without any external state variables and functions 
+     it takes some options to validate like name, required with error message, maxLength, minLength, pattern Regex, validate, disabled, onChange, onBlur;
+
+     ex:- <input id="name" {...register("name", {required: "This field is required"}, validate: (value)=> value === "firstname" || "The value is not firstname")};  
+           here we set the name, and we set the required with error message so if the field is empty this error will show up and we are validating the input and if the value of the input is not equal to firstname then the error message in the condition will return and display on the UI below the field
+
+2. handleSubmit() it is a function which takes two functions one to execute when the form submit is success another to execute when the form has some errors and cannot be submmitted 
+   we use this on the <form> tags onSubmit prop 
+   ex: <form onSubmit={handleSubmit(onSubmit, onError)} />
+       so when we submit form if it is success it executes onSubmit and not success it run onError 
+       and the onSubmit gets the "data" props which is a object with all the values from the registered inputs and the onError() gets "error" prop which contains any error messages returned from the form incase of submit not done
+
+       so you can run your mutate function that sends data to api in the onSubmit by passing data as prop to the mutate function 
+       ex: const { mutate, isLoading } = useMutation({
+        mutationFn: createCabin,
+        onSuccess: () => {
+          toast.success("New cabin successfully created");
+          queryClient.invalidateQueries({
+            queryKey: ["cabins"],
+          });
+          reset();
+        },
+        onError: (err) => toast.error(err.message),
+      });
+    
+      function onSubmit(data) {
+        mutate(data);
+      }
+ 3. reset() reset is just a function that will reset all form and its input fields 
+
+ 4.getValues() this is used to access the values of all the input fields sometimes you need to validate one value against another by comparing both/ you need to pass a input value as a prop to some function 
+    but the onSubmit will only get all the values of the input field to access any one of the value at one time we can use the getValue();   
+    by calling getValues() we get the values as object we can either store it in a variable or chain on it to access our desired value 
+     
+    ex:  <Input
+    type="number"
+    id="discount"
+    disabled={isLoading}
+    defaultValue={0}
+    {...register("discount", {
+      required: "This field is required",
+      validate: (value) =>
+        value <= getValues().regularPrice ||
+        "Discount Should be less than regular price",
+    })}
+  /> 
+
+   here we are validating the discount input against regularPrice value by using the getValues 
+
+  5. formState it is a object that contains information about the entire formState like errors, the touched fields, submit count; 
+    you can get all the errors returned from the validation, required fields in the errors filed of the fromState. and you can see the fields that user has touched but not filled, and you can also see the submit count that the number of times the form has been submitted by the user 
+    
+
+
+    
+    THE PATTERN/RECIPE TO CREATE A COMPOUNT COMPONENT
+    
+    1. CREATE A CONTEXT {  const context = createContext()} 
+    2. CREATE A PARENT COMPONENT { 
+      function Component(){
+        return (<context.Provider value={{all the values to expose to the children}}> 
+        {children}
+        </context.Provider>
+        )}
+      }
+      
+      3. CREATE THE CHILDREN COMPONENT THAT ONLY MAKE SENSE TO USE WITH THE PARENT COMPONENT  {
+        const Feature({children}) {
+          return <span>{children}</span> 
+        }
+      }
+      
+      4. ADD THE CHILDREN COMPONENT AS THE PROPERTIES TO THE PARENT COMPONENT {
+        Component.Feature = Feature;
+      }
+      
+      SO NOW YOU ONLY NEED TO EXPORT THE PARENT COMPONENT TO USE IT IN ANY OTHER COMPONENTS 
+      THERE IS NO NEED OF PASSING PROPS TO THE PARENT COMPONENT AND YOU CAN USE ALL THE CHILDREN COMPONENTS AND YOU CAN ALSO JUST USE SOME OF THEM
+      
+      
+BUILDING A MODAL WINDOW USING REACT PORTAL AND CONVERTING IT TO A COMPOUND COMPONENT USING THE PATTERN
+
+1. React portal is a react-dom property and is a function that allows us to render the jsx prodived to it anywhere in the DOM tree and keeping the component in the component tree as where we defined it 
+
+2. USAGE: { 
+    in a component we need to return the createPortal instead of our JSX with the JSx as prop to the createPortal along with the element we want to render it in 
+    EX: 
+
+    export default function Modal({ children, onClose }) {
+      return createPortal(
+        <Overlay>
+          <StyledModal>
+            <Button onClick={onClose}>
+              <HiXMark />
+            </Button>
+            <div>{children}</div>
+          </StyledModal>
+        </Overlay>,
+        document.body
+      );
+    }
+    
+}
+
+3. now the Modal component will always render inside the body element and will be seperated from the rest of the Application in the DOM tree     
+
+4. Why exactly we need it is because when we use overflow:hidden on any parent component it will clash with the modal window styling and mess up it rendering that is why createPortal is a neceessary pattern to follow when making a Modal
+
+
+
+RECHARTS REACT CHARTS LIBRARY
+
+INSTALLATION : npm i recharts
+
+
